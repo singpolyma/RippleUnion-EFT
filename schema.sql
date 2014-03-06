@@ -1,0 +1,4 @@
+CREATE TABLE accounts (
+	id INTEGER PRIMARY KEY NOT NULL,
+	vogogo_uuid TEXT NOT NULL
+);

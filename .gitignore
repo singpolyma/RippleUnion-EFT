@@ -1,0 +1,8 @@
+MustacheTemplates.hs
+PathHelpers.hs
+Routes.hs
+*.o
+*.hi
+*.swp
+Main
+*.sqlite3
