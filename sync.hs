@@ -30,18 +30,18 @@ hex i = showHex (toInteger i) ""
 doInsert :: Connection -> Integer -> Maybe Field -> Maybe (Double, String) -> Maybe Field -> Maybe Field -> IO ()
 doInsert db ledger (Just (TransactionHash txhash)) (Just (amount, curr))
 	(Just (DestinationTag dt)) (Just (InvoiceID invoiceid)) =
-		execute db (s"INSERT INTO transactions (txhash,ledger_index,amount,currency,dt,invoiceid) VALUES (?,?,?,?,?,?)")
+		execute db (s"INSERT OR IGNORE INTO transactions (txhash,ledger_index,amount,currency,dt,invoiceid) VALUES (?,?,?,?,?,?)")
 			(hex txhash, ledger, amount, curr, dt, hex invoiceid)
 doInsert db ledger (Just (TransactionHash txhash)) (Just (amount,curr))
 	(Just (DestinationTag dt)) _ =
-		execute db (s"INSERT INTO transactions (txhash,ledger_index,amount,currency,dt) VALUES (?,?,?,?,?)")
+		execute db (s"INSERT OR IGNORE INTO transactions (txhash,ledger_index,amount,currency,dt) VALUES (?,?,?,?,?)")
 			(hex txhash, ledger, amount, curr, dt)
 doInsert db ledger (Just (TransactionHash txhash)) (Just (amount, curr))
 	_ (Just (InvoiceID invoiceid)) =
-		execute db (s"INSERT INTO transactions (txhash,ledger_index,amount,currency,invoiceid) VALUES (?,?,?,?,?,?)")
+		execute db (s"INSERT OR IGNORE INTO transactions (txhash,ledger_index,amount,currency,invoiceid) VALUES (?,?,?,?,?,?)")
 			(hex txhash, ledger, amount, curr, hex invoiceid)
 doInsert db ledger (Just (TransactionHash txhash)) (Just (amount,curr)) _ _ =
-		execute db (s"INSERT INTO transactions (txhash,ledger_index,amount,currency) VALUES (?,?,?,?)")
+		execute db (s"INSERT OR IGNORE INTO transactions (txhash,ledger_index,amount,currency) VALUES (?,?,?,?)")
 			(showHex txhash "", ledger, amount, curr)
 doInsert _ _ txhash _ _ _ =
 	hPutStrLn stderr $ "Invalid transaction: " ++ textToString (show txhash)
