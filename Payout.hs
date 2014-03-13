@@ -1,9 +1,15 @@
 module Payout where
 
+import Control.Applicative
 import Control.Exception (assert)
 import Data.Fixed (Centi)
 import Data.Map (Map)
 import qualified Data.Map as Map
+
+import Database.SQLite.Simple (SQLData(..))
+import Database.SQLite.Simple.Ok (Ok(..))
+import Database.SQLite.Simple.FromRow (FromRow(..), field, fieldWith)
+import Database.SQLite.Simple.FromField (fieldData)
 
 type Account = Int
 type TxHash = String
@@ -14,6 +20,14 @@ data Transaction = Transaction {
 		amount  :: Centi,
 		paidOut :: Centi
 	} deriving (Show, Eq)
+
+instance FromRow Transaction where
+	fromRow = Transaction <$> field <*> field <*> fieldWith dbl <*> fieldWith dbl
+		where
+		dbl f = case fieldData f of
+			SQLInteger i -> Ok $ fromIntegral i
+			SQLFloat d -> Ok $ realToFrac d
+			_ -> Errors []
 
 mkAccountMap :: [Transaction] -> Map Account [Transaction]
 mkAccountMap = Map.fromListWith (++) . map (\t -> (account t, [t]))
