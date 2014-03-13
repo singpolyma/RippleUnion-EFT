@@ -6,9 +6,9 @@ CREATE TABLE accounts (
 CREATE TABLE transactions (
 	txhash TEXT PRIMARY KEY NOT NULL,
 	ledger_index INTEGER NOT NULL,
-	amount DECIMAL NOT NULL,
+	amount FLOAT NOT NULL,
 	currency TEXT NOT NULL,
 	dt INTEGER,
 	invoiceid TEXT,
-	paid_out DECIMAL NOT NULL DEFAULT 0
+	paid_out FLOAT NOT NULL DEFAULT 0
 );
