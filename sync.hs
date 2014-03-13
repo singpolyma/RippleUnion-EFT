@@ -42,7 +42,7 @@ doInsert db ledger (Just (TransactionHash txhash)) (Just (amount, curr))
 			(hex txhash, ledger, amount, curr, hex invoiceid)
 doInsert db ledger (Just (TransactionHash txhash)) (Just (amount,curr)) _ _ =
 		execute db (s"INSERT OR IGNORE INTO transactions (txhash,ledger_index,amount,currency) VALUES (?,?,?,?)")
-			(showHex txhash "", ledger, amount, curr)
+			(hex txhash, ledger, amount, curr)
 doInsert _ _ txhash _ _ _ =
 	hPutStrLn stderr $ "Invalid transaction: " ++ textToString (show txhash)
 
