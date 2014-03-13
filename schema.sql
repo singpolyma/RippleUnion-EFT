@@ -10,5 +10,5 @@ CREATE TABLE transactions (
 	currency TEXT NOT NULL,
 	dt INTEGER,
 	invoiceid TEXT,
-	processed INTEGER NOT NULL DEFAULT 0
+	paid_out DECIMAL NOT NULL DEFAULT 0
 );
