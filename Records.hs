@@ -176,7 +176,6 @@ data Quote = Quote {
 
 instance ToJSON Quote where
 	toJSON (Quote ripple dt (amount,currency)) = object [
-		s"federation_json" .= object [
 			s"result" .= "success",
 			s"quote" .= object [
 				s"address" .= show ripple,
@@ -186,7 +185,7 @@ instance ToJSON Quote where
 					s"value" .= show amount
 				]]
 			]
-		]]
+		]
 
 instance ToJSON FederationError where
 	toJSON (FederationError typ message) = object [
