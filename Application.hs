@@ -89,7 +89,8 @@ quoteEndpoint root db vgg rAddr req = eitherT err return $ do
 
 	(samnt:currency:_) <- T.splitOn (s"/") <$> fromQ "amount"
 	when (currency /= s"CAD") $ throwT invalidCurrency
-	amnt <- noteT' (FederationError InvalidParams "Invalid amount") (readMay samnt)
+	amnt <- noteT' (FederationError InvalidParams "Invalid amount")
+		(realToFrac <$> (readMay samnt :: Maybe Double))
 
 	when (amnt > limit) $ throwT $ FederationError InvalidParams "Over limit"
 
