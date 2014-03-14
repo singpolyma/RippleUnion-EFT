@@ -28,6 +28,9 @@ import Records
 fee :: Double
 fee = 5
 
+limit :: Double
+limit = 500
+
 type Action a = URI -> Connection -> Vgg.Auth -> RippleAddress -> a
 Just [cors] = stringHeaders [("Access-Control-Allow-Origin", "*")]
 
@@ -85,6 +88,8 @@ quoteEndpoint root db vgg rAddr req = eitherT err return $ do
 	(samnt:currency:_) <- T.splitOn (s"/") <$> fromQ "amount"
 	when (currency /= s"CAD") $ throwT invalidCurrency
 	amnt <- noteT' (FederationError InvalidParams "Invalid amount") (readMay samnt)
+
+	when (amnt > limit) $ throwT $ FederationError InvalidParams "Over limit"
 
 	Vgg.UUID uuid <- fmap Vgg.uuid $ fmapLT apiErr $ EitherT $ liftIO $
 		VggC.createAccount vgg $
