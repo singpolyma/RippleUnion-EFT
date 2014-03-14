@@ -11,7 +11,7 @@ import Database.SQLite.Simple.Ok (Ok(..))
 import Database.SQLite.Simple.FromRow (FromRow(..), field, fieldWith)
 import Database.SQLite.Simple.FromField (fieldData)
 
-type Account = Int
+type Account = String
 type TxHash = String
 
 data Transaction = Transaction {

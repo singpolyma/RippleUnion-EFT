@@ -18,7 +18,7 @@ main = do
 	[dbpth] <- getArgs
 	db <- open $ textToString dbpth
 
-	transactions <- query_ db (s"SELECT txhash,dt,amount,paid_out FROM transactions WHERE currency='CAD' AND dt AND paid_out < amount ORDER BY ledger_index ASC")
+	transactions <- query_ db (s"SELECT txhash,vogogo_uuid,amount,paid_out FROM transactions INNER JOIN accounts ON transactions.dt = accounts.id WHERE currency='CAD' AND dt AND paid_out < amount ORDER BY ledger_index ASC")
 
 	let forAccounts = mkAccountMap transactions
 	let payouts = Map.toList $ Map.map (computeOnePayout 100 2) forAccounts
