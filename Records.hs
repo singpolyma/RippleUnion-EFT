@@ -171,11 +171,11 @@ instance ToJSON ShouldQuote where
 data Quote = Quote {
 		quoteRipple :: RippleAddress,
 		quoteDT     :: Word32,
-		quoteAmount :: (Double, String)
+		quoteAmount :: (Double, String, RippleAddress)
 	}
 
 instance ToJSON Quote where
-	toJSON (Quote ripple dt (amount,currency)) = object [
+	toJSON (Quote ripple dt (amount,currency,issuer)) = object [
 			s"result" .= "success",
 			s"quote" .= object [
 				s"address" .= show ripple,
@@ -183,7 +183,7 @@ instance ToJSON Quote where
 				s"send" .= [object [
 					s"currency" .= currency,
 					s"value" .= show amount,
-					s"issuer" .= (Nothing::Maybe String)
+					s"issuer" .= show issuer
 				]]
 			]
 		]

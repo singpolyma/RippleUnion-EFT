@@ -103,7 +103,7 @@ quoteEndpoint root db vgg rAddr req = eitherT err return $ do
 			fst <$> insertSucc db (s"INSERT INTO accounts VALUES(?,?)")
 				(first succ) (rdt, uuid)
 
-	json ok200 [cors] (Quote rAddr (fromInteger dt) (amnt + fee, "CAD"))
+	json ok200 [cors] (Quote rAddr (fromInteger dt) (amnt + fee, "CAD", rAddr))
 
 	where
 	query' sql = liftIO . query db (s sql)
