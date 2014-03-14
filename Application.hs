@@ -73,8 +73,12 @@ federationEndpoint root _ _ _ req = eitherT err return $ do
 
 quoteEndpoint :: Action Application
 quoteEndpoint root db vgg rAddr req = eitherT err return $ do
+	account <- fromQ "destination"
+
+	{- Current client does not send domain for quote request
 	(domain,account) <- (,) <$> fromQ "domain" <*> fromQ "destination"
 	when (domain /= rootDomain) $ throwT nodomain
+	-}
 
 	(t,i,a) <- noteT' invalidAccount $ parseAccountNumbers account
 
