@@ -1,1 +1,2 @@
 GET /federation => federationEndpoint
+GET /federation/quote => quoteEndpoint

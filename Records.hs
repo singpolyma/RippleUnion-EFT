@@ -50,10 +50,6 @@ instance FromRow Deposit where
 				Just ripple -> Ok ripple
 			_ -> Errors [toException $ ConversionFailed "TEXT" "RippleAddress" "need a text"]
 
-instance ToRow Quote where
-	toRow (Quote qid typ amnt dest email q a msg complete) =
-		[toField qid, toField typ, toField amnt, toField (show dest), toField (show email), toField q, toField a, toField msg, toField complete]
-
 instance (CanVerify a) => ToRow (Verification a) where
 	toRow (Verification item typ notes token) = [
 			toField itemId,
@@ -66,9 +62,6 @@ instance (CanVerify a) => ToRow (Verification a) where
 		(itemId, itemTable) = verifyItemData item
 
 instance ToField VerificationType where
-	toField = toField . show
-
-instance ToField QuoteType where
 	toField = toField . show
 
 class CanVerify a where
@@ -121,26 +114,6 @@ data PlivoDeposit = PlivoDeposit {
 		plivoCode :: String
 	}
 
-data QuoteType = InteracETransferQuote
-	deriving (Show, Read, Enum)
-
-data Quote = Quote {
-		quoteId          :: Word32, -- Because destination tag
-		quoteType        :: QuoteType,
-		quoteAmount      :: Double,
-		quoteDestination :: EmailAddress,
-		quotorEmail      :: EmailAddress,
-		quoteQuestion    :: Text,
-		quoteAnswer      :: Text,
-		quoteMessage     :: Text,
-		quoteComplete    :: Bool
-	}
-
-data QuoteSuccess = QuoteSuccess {
-		successfulQuote :: [Quote],
-		quoteHomeLink :: URI
-	}
-
 data PlivoConfig = PlivoConfig {
 		plivoAuthId    :: String,
 		plivoAuthToken :: String,
@@ -181,6 +154,39 @@ instance ToJSON Alias where
 				s"currencies" .= [object [s"currency" .= "CAD"]]
 			] ++ maybe [] (\x -> [s"dt" .= x]) dt)
 		]
+
+data ShouldQuote = ShouldQuote Text Text URI
+
+instance ToJSON ShouldQuote where
+	toJSON (ShouldQuote alias domain quoteURI) = object [
+		s"federation_json" .= object [
+				s"type" .= "federation_record",
+				s"destination" .= alias,
+				s"domain" .= domain,
+				s"quote_url" .= show quoteURI,
+				s"currencies" .= [object [s"currency" .= "CAD"]]
+			]
+		]
+
+data Quote = Quote {
+		quoteRipple :: RippleAddress,
+		quoteDT     :: Word32,
+		quoteAmount :: (Double, String)
+	}
+
+instance ToJSON Quote where
+	toJSON (Quote ripple dt (amount,currency)) = object [
+		s"federation_json" .= object [
+			s"result" .= "success",
+			s"quote" .= object [
+				s"address" .= show ripple,
+				s"destination_tag" .= dt,
+				s"send" .= [object [
+					s"currency" .= currency,
+					s"value" .= show amount
+				]]
+			]
+		]]
 
 instance ToJSON FederationError where
 	toJSON (FederationError typ message) = object [

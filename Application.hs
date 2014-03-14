@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-module Application (federationEndpoint) where
+module Application (federationEndpoint, quoteEndpoint) where
 
 import Prelude ()
 import BasicPrelude
@@ -9,7 +9,7 @@ import Data.Base58Address (RippleAddress)
 import Database.SQLite3 (SQLError(..), Error(ErrorConstraint))
 import qualified Data.Text as T
 
-import Network.Wai (Application, queryString)
+import Network.Wai (Application, Response, queryString)
 import Network.HTTP.Types (ok200, badRequest400, notFound404)
 import Network.Wai.Util (stringHeaders, json, queryLookup)
 
@@ -17,12 +17,16 @@ import qualified Vogogo as Vgg
 import qualified Vogogo.Customer as VggC
 
 import Network.URI (URI(..), URIAuth(..))
+import Network.URI.Partial (relativeTo)
 
 import Database.SQLite.Simple (query, execute, Connection, Query)
 import Database.SQLite.Simple.ToRow (ToRow)
 
 import Records
 #include "PathHelpers.hs"
+
+fee :: Double
+fee = 5
 
 type Action a = URI -> Connection -> Vgg.Auth -> RippleAddress -> a
 Just [cors] = stringHeaders [("Access-Control-Allow-Origin", "*")]
@@ -39,12 +43,45 @@ parseAccountNumbers t
 	where
 	pieces@(_:i:_) = T.splitOn (s"-") t
 
+
+err :: (Monad m) => FederationError -> m Response
+err e@(FederationError NoSuchUser _) = json notFound404 [cors] e
+err e = json badRequest400 [cors] e
+
+nodomain :: FederationError
+nodomain = FederationError NoSuchDomain "That domain is not served here."
+
+invalidAccount :: FederationError
+invalidAccount = FederationError NoSuchUser "Invalid account numbers."
+
+invalidCurrency :: FederationError
+invalidCurrency = FederationError InvalidParams "Invalid currency"
+
 federationEndpoint :: Action Application
-federationEndpoint root db vgg rAddr req = eitherT err return $ do
+federationEndpoint root _ _ _ req = eitherT err return $ do
+	(domain,account) <- (,) <$> fromQ "domain" <*> fromQ "destination"
+	when (domain /= rootDomain) $ throwT nodomain
+
+	(_,_,_) <- noteT' invalidAccount $ parseAccountNumbers account
+
+	json ok200 [cors] (ShouldQuote account domain (quoteEndpointPath `relativeTo` root))
+	where
+	Just rootDomain = T.pack . uriRegName <$> uriAuthority root
+	fromQ k = noteT' (FederationError InvalidParams ("No "++k++" provided.")) $
+		queryLookup k (queryString req)
+
+
+quoteEndpoint :: Action Application
+quoteEndpoint root db vgg rAddr req = eitherT err return $ do
 	(domain,account) <- (,) <$> fromQ "domain" <*> fromQ "destination"
 	when (domain /= rootDomain) $ throwT nodomain
 
 	(t,i,a) <- noteT' invalidAccount $ parseAccountNumbers account
+
+	(samnt:currency:_) <- T.splitOn (s"/") <$> fromQ "amount"
+	when (currency /= s"CAD") $ throwT invalidCurrency
+	amnt <- noteT' (FederationError InvalidParams "Invalid amount") (readMay samnt)
+
 	Vgg.UUID uuid <- fmap Vgg.uuid $ fmapLT apiErr $ EitherT $ liftIO $
 		VggC.createAccount vgg $
 			VggC.BankAccount (T.unpack account) t i a (read $ s"CAD")
@@ -57,19 +94,15 @@ federationEndpoint root db vgg rAddr req = eitherT err return $ do
 			fst <$> insertSucc db (s"INSERT INTO accounts VALUES(?,?)")
 				(first succ) (rdt, uuid)
 
-	json ok200 [cors] (Alias account domain rAddr (Just $ fromInteger dt))
+	json ok200 [cors] (Quote rAddr (fromInteger dt) (amnt + fee, "CAD"))
+
 	where
 	query' sql = liftIO . query db (s sql)
-
-	err e@(FederationError NoSuchUser _) = json notFound404 [cors] e
-	err e = json badRequest400 [cors] e
 
 	apiErr Vgg.APIParamError = FederationError InvalidParams "Invalid account"
 	apiErr _ = FederationError Unavailable "Something went wrong"
 
 	Just rootDomain = T.pack . uriRegName <$> uriAuthority root
-	nodomain = FederationError NoSuchDomain "That domain is not served here."
-	invalidAccount = FederationError NoSuchUser "Invalid account numbers."
 	fromQ k = noteT' (FederationError InvalidParams ("No "++k++" provided.")) $
 		queryLookup k (queryString req)
 
