@@ -182,7 +182,8 @@ instance ToJSON Quote where
 				s"destination_tag" .= dt,
 				s"send" .= [object [
 					s"currency" .= currency,
-					s"value" .= show amount
+					s"value" .= show amount,
+					s"issuer" .= (Nothing::Maybe String)
 				]]
 			]
 		]
