@@ -22,13 +22,15 @@ import Network.URI.Partial (relativeTo)
 import Database.SQLite.Simple (query, execute, Connection, Query)
 import Database.SQLite.Simple.ToRow (ToRow)
 
+import qualified Ripple.Amount as Ripple
+
 import Records
 #include "PathHelpers.hs"
 
-fee :: Double
+fee :: Rational
 fee = 5
 
-limit :: Double
+limit :: Rational
 limit = 500
 
 type Action a = URI -> Connection -> Vgg.Auth -> RippleAddress -> a
@@ -103,7 +105,8 @@ quoteEndpoint root db vgg rAddr req = eitherT err return $ do
 			fst <$> insertSucc db (s"INSERT INTO accounts VALUES(?,?)")
 				(first succ) (rdt, uuid)
 
-	json ok200 [cors] (Quote rAddr (fromInteger dt) (amnt + fee, "CAD", rAddr))
+	json ok200 [cors] (Quote rAddr (fromInteger dt)
+		(Ripple.Amount (amnt+fee) $ Ripple.Currency ('C','A','D') rAddr))
 
 	where
 	query' sql = liftIO . query db (s sql)

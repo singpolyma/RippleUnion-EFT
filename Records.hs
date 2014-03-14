@@ -19,6 +19,8 @@ import Database.SQLite.Simple.FromField (fieldData, ResultError(ConversionFailed
 import Database.SQLite.Simple.Ok (Ok(Ok, Errors))
 import Text.Blaze.Html.Renderer.Text (renderHtmlBuilder)
 
+import qualified Ripple.Amount as Ripple
+
 serviceLimit :: Int
 serviceLimit = 100
 
@@ -171,20 +173,16 @@ instance ToJSON ShouldQuote where
 data Quote = Quote {
 		quoteRipple :: RippleAddress,
 		quoteDT     :: Word32,
-		quoteAmount :: (Double, String, RippleAddress)
+		quoteAmount :: Ripple.Amount
 	}
 
 instance ToJSON Quote where
-	toJSON (Quote ripple dt (amount,currency,issuer)) = object [
+	toJSON (Quote ripple dt amount) = object [
 			s"result" .= "success",
 			s"quote" .= object [
 				s"address" .= show ripple,
 				s"destination_tag" .= dt,
-				s"send" .= [object [
-					s"currency" .= currency,
-					s"value" .= show amount,
-					s"issuer" .= show issuer
-				]]
+				s"send" .= [amount]
 			]
 		]
 
