@@ -177,7 +177,8 @@ instance ToJSON Alias where
 				s"type" .= "federation_record",
 				s"destination" .= alias,
 				s"domain" .= domain,
-				s"destination_address" .= show ripple
+				s"destination_address" .= show ripple,
+				s"currencies" .= [object [s"currency" .= "CAD"]]
 			] ++ maybe [] (\x -> [s"dt" .= x]) dt)
 		]
 
