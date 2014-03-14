@@ -2,6 +2,7 @@ module Main (main) where
 
 import Prelude ()
 import BasicPrelude
+import Data.Fixed (Centi)
 import System.IO (hPutStrLn, stderr)
 import Database.SQLite.Simple (Connection, open, execute, execute_, query_)
 
@@ -9,6 +10,12 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Payout
+
+fee :: Centi
+fee = 5
+
+limit :: Centi
+limit = 500
 
 s :: (IsString a) => String -> a
 s = fromString
@@ -21,7 +28,7 @@ main = do
 	transactions <- query_ db (s"SELECT txhash,vogogo_uuid,amount,paid_out FROM transactions INNER JOIN accounts ON transactions.dt = accounts.id WHERE currency='CAD' AND dt AND paid_out < amount ORDER BY ledger_index ASC")
 
 	let forAccounts = mkAccountMap transactions
-	let payouts = Map.toList $ Map.map (computeOnePayout 100 2) forAccounts
+	let payouts = Map.toList $ Map.map (computeOnePayout limit fee) forAccounts
 
 	forM_ payouts $ \(account, (payout, partials)) -> do
 		execute_ db (s"BEGIN TRANSACTION")
