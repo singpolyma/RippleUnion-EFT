@@ -11,7 +11,7 @@ import qualified Data.Text as T
 
 import Network.Wai (Application, Response, queryString)
 import Network.HTTP.Types (ok200, badRequest400, notFound404)
-import Network.Wai.Util (stringHeaders, json, queryLookup)
+import Network.Wai.Util (stringHeaders, textBuilder, queryLookup)
 
 import qualified Vogogo as Vgg
 import qualified Vogogo.Customer as VggC
@@ -26,7 +26,38 @@ import qualified Ripple.Amount as Ripple
 
 import Records
 import Federation
+import MustacheTemplates
 #include "PathHelpers.hs"
 
-showAccount :: Action (Word64 -> Application)
-showAccount = undefined
+htmlEscape :: String -> String
+htmlEscape = concatMap escChar
+	where
+	escChar '&' = "&amp;"
+	escChar '"' = "&quot;"
+	escChar '<' = "&lt;"
+	escChar '>' = "&gt;"
+	escChar c   = [c]
+
+Just [htmlCT] = stringHeaders [("Content-Type", "text/html; charset=utf-8")]
+
+showAccount :: Action (Word32 -> Application)
+showAccount _ db _ _ account _ = do
+	txs <- query' [
+			"SELECT UPPER(txhash),ledger_index,amount,",
+			"CASE WHEN paid_out == 0 THEN 'pending'",
+			"     WHEN paid_out >= amount THEN 'sent'",
+			"     ELSE 'partial'",
+			"END ",
+			"FROM transactions WHERE dt=? AND currency='CAD' ",
+			"ORDER BY ledger_index DESC"
+		] [toInteger account]
+
+	ledger <- fromInteger . head . head <$> query' [
+			"SELECT ledger_index FROM transactions ",
+			"ORDER BY ledger_index DESC LIMIT 1"
+		] ([] :: [Int])
+
+	textBuilder ok200 [htmlCT] $ viewShowAccount htmlEscape
+		(ShowAccount [Header ledger] account txs)
+	where
+	query' sql = liftIO . query db (s $ concat sql)

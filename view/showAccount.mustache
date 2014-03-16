@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		{{#header}}
+			{{> meta.mustache}}
+		{{/header}}
+	</head>
+
+	<body>
+		{{#header}}
+			{{> header.mustache}}
+		{{/header}}
+
+		<section>
+			<header>
+				<h1>Account Summary for dt={{showAccountDT}}</h1>
+
+				<p>This page shows the transaction history for this account.  Transactions may take a couple of hours to show up here, after which you can see if they are still pending, have been partially sent (due to daily limits), or fully sent.  If you're still waiting for a transaction to show up, please note the last ledger index seen by our system in the header.</p>
+
+				<p>Transactions make take up to five business days to show up at your bank after they have been fully sent.  Partially sent transactions will show up on your bank statement as multiple transactions when they complete.</p>
+			</header>
+
+			<table>
+				<tr>
+					<th>Transaction Hash</th>
+					<th>Ledger Index</th>
+					<th>For Amount</th>
+					<th>Status</th>
+				</tr>
+
+				{{#transactions}}
+					<tr>
+						<td><a href="https://ripple.com/graph/#{{txhash}}">{{txhash}}</a></td>
+						<td><a href="https://wisepass.com/ledger/{{ledger_index}}">{{ledger_index}}</a></td>
+						<td>{{amount}} CAD</td>
+						<td>{{status}}</td>
+					</tr>
+				{{/transactions}}
+			</table>
+		</section>
+	</body>
+</html>

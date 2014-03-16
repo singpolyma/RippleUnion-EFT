@@ -2,6 +2,7 @@ module Records where
 
 import Prelude ()
 import BasicPrelude
+import Data.Fixed (Centi)
 
 import Text.Blaze.Html (Html)
 import Text.Blaze.Internal (MarkupM)
@@ -10,7 +11,10 @@ import Data.Base58Address (RippleAddress)
 import Data.Aeson (ToJSON(..), object, (.=))
 
 import Data.Text.Buildable
-import Database.SQLite.Simple (Connection)
+import Database.SQLite.Simple (SQLData(..), Connection)
+import Database.SQLite.Simple.Ok (Ok(..))
+import Database.SQLite.Simple.FromRow (FromRow(..), field, fieldWith)
+import Database.SQLite.Simple.FromField (fieldData)
 import Text.Blaze.Html.Renderer.Text (renderHtmlBuilder)
 
 import qualified Ripple.Amount as Ripple
@@ -33,6 +37,12 @@ instance Buildable (MarkupM a) where
 instance Buildable URI where
 	build = build . show
 
+data ShowAccount = ShowAccount {
+		header :: [Header],
+		showAccountDT :: Word32,
+		transactions :: [Transaction]
+	}
+
 data Form = Form {
 		formHtml   :: Html,
 		formAction :: URI
@@ -41,19 +51,24 @@ data Form = Form {
 instance Eq Form where
 	(Form _ a1) == (Form _ a2) = a1 == a2
 
-
 data Header = Header {
+		lastSeenLedger :: Word32
 	}
 
-instance Monoid Header where
-	mempty = Header
-	mappend _ _ = Header
+data Transaction = Transaction {
+		txhash :: String,
+		ledger_index :: Word32,
+		amount :: Centi,
+		status :: String
+	}
 
-instance Eq Header where
-	_ == _ = False
-
-header :: Header
-header = Header
+instance FromRow Transaction where
+	fromRow = Transaction <$> field <*> fmap fromInteger field <*> fieldWith dbl <*> field
+		where
+		dbl f = case fieldData f of
+			SQLInteger i -> Ok $ fromIntegral i
+			SQLFloat d -> Ok $ realToFrac d
+			_ -> Errors []
 
 -- Federation stuff
 

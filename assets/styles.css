@@ -1,0 +1,32 @@
+@import "//rippleunion.com/base.css";
+@import "//rippleunion.com/form.css";
+
+body > header p {
+	clear: both;
+	text-align: right;
+}
+
+form {
+	display: table;
+	margin: auto;
+}
+
+table {
+	border-spacing: 1em 0.5em;
+	margin: auto;
+	width: 100%;
+	max-width: 65em;
+}
+
+table tr {
+	width: 100%;
+}
+
+table th, table td {
+	text-align: center;
+}
+
+table td:first-child {
+	word-break: break-all;
+	overflow: hidden;
+}
