@@ -11,7 +11,7 @@ import Data.Base58Address (RippleAddress)
 import Data.Aeson (ToJSON(..), object, (.=))
 
 import Data.Text.Buildable
-import Database.SQLite.Simple (SQLData(SQLText))
+import Database.SQLite.Simple (SQLData(SQLText), Connection)
 import Database.SQLite.Simple.FromRow (FromRow(..), field, fieldWith)
 import Database.SQLite.Simple.ToRow (ToRow(..))
 import Database.SQLite.Simple.ToField (ToField(..), toField)
@@ -20,12 +20,15 @@ import Database.SQLite.Simple.Ok (Ok(Ok, Errors))
 import Text.Blaze.Html.Renderer.Text (renderHtmlBuilder)
 
 import qualified Ripple.Amount as Ripple
+import qualified Vogogo as Vgg
 
-serviceLimit :: Int
-serviceLimit = 100
+fee :: Rational
+fee = 5
 
-serviceFee :: Int
-serviceFee = 2
+limit :: Rational
+limit = 500
+
+type Action a = URI -> Connection -> Vgg.Auth -> RippleAddress -> a
 
 instance Buildable (MarkupM a) where
 	build = renderHtmlBuilder . fmap (const ())

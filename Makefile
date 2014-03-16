@@ -1,11 +1,11 @@
-Main: Main.hs Application.hs Routes.hs PathHelpers.hs
+Main: Main.hs Application.hs Routes.hs PathHelpers.hs Records.hs Federation.hs
 	ghc -threaded -O2 -Wall -fno-warn-name-shadowing Main.hs
 
 Routes.hs: routes
 	routeGenerator -r -m Application -n 4 $< > $@
 
 PathHelpers.hs: routes
-	routeGenerator -p -n 4 $< > $@
+	routeGenerator -cp -n 4 $< > $@
 
 MustacheTemplates.hs: Records.hs view/home.mustache
 	mustache2hs -m Records.hs view/home.mustache Home > $@

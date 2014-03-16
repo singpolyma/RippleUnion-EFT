@@ -1,2 +1,4 @@
+GET /account/: => showAccount
+
 GET /federation => federationEndpoint
 GET /federation/quote => quoteEndpoint
