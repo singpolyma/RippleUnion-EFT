@@ -1,4 +1,6 @@
-GET /account/: => showAccount
+GET / => home
+GET /accounts => lookupAccount
+GET /accounts/: => showAccount
 
 GET /federation => federationEndpoint
 GET /federation/quote => quoteEndpoint

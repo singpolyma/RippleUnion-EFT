@@ -3,6 +3,7 @@ module Records where
 import Prelude ()
 import BasicPrelude
 import Data.Fixed (Centi)
+import Control.Error (EitherT, noteT, hoistMaybe)
 
 import Text.Blaze.Html (Html)
 import Text.Blaze.Internal (MarkupM)
@@ -20,14 +21,17 @@ import Text.Blaze.Html.Renderer.Text (renderHtmlBuilder)
 import qualified Ripple.Amount as Ripple
 import qualified Vogogo as Vgg
 
-fee :: Rational
+fee :: Int
 fee = 5
 
-limit :: Rational
+limit :: Int
 limit = 500
 
 s :: (IsString s) => String -> s
 s = fromString
+
+noteT' :: (Monad m) => e -> Maybe a -> EitherT e m a
+noteT' e = noteT e . hoistMaybe
 
 type Action a = URI -> Connection -> Vgg.Auth -> RippleAddress -> a
 
@@ -36,6 +40,11 @@ instance Buildable (MarkupM a) where
 
 instance Buildable URI where
 	build = build . show
+
+data Home = Home {
+		homeHeader :: [Header],
+		lookupAction :: URI
+	}
 
 data ShowAccount = ShowAccount {
 		header :: [Header],

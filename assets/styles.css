@@ -1,14 +1,25 @@
 @import "//rippleunion.com/base.css";
 @import "//rippleunion.com/form.css";
 
+form {
+	width: 70%;
+}
+
+form button {
+	margin-bottom: 1em;
+}
+
+input {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
 body > header p {
 	clear: both;
 	text-align: right;
-}
-
-form {
-	display: table;
-	margin: auto;
 }
 
 table {

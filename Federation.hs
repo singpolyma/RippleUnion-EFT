@@ -3,35 +3,29 @@ module Federation (federationEndpoint, quoteEndpoint) where
 
 import Prelude ()
 import BasicPrelude
-import System.Random (randomRIO)
-import Control.Error (eitherT, EitherT(..), fmapLT, throwT, noteT, hoistMaybe)
-import Database.SQLite3 (SQLError(..), Error(ErrorConstraint))
+import Control.Error (eitherT, MaybeT(..), throwT, noteT)
 import qualified Data.Text as T
 
 import Network.Wai (Application, Response, queryString)
 import Network.HTTP.Types (ok200, badRequest400, notFound404)
 import Network.Wai.Util (stringHeaders, json, queryLookup)
 
-import qualified Vogogo as Vgg
-import qualified Vogogo.Customer as VggC
-
 import Network.URI (URI(..), URIAuth(..))
 import Network.URI.Partial (relativeTo)
 
-import Database.SQLite.Simple (query, execute, Connection, Query)
-import Database.SQLite.Simple.ToRow (ToRow)
+import Database.SQLite.Simple (query)
 
 import qualified Ripple.Amount as Ripple
 
 import Records
+import Account
 
 #define NO_showAccount
+#define NO_home
+#define NO_lookupAccount
 #include "PathHelpers.hs"
 
 Just [cors] = stringHeaders [("Access-Control-Allow-Origin", "*")]
-
-noteT' :: (Monad m) => e -> Maybe a -> EitherT e m a
-noteT' e = noteT e . hoistMaybe
 
 parseAccountNumbers :: Text -> Maybe (String,String,String)
 parseAccountNumbers t
@@ -84,38 +78,17 @@ quoteEndpoint _ db vgg rAddr req = eitherT err return $ do
 	amnt <- noteT' (FederationError InvalidParams "Invalid amount")
 		(realToFrac <$> (readMay samnt :: Maybe Double))
 
-	when (amnt > limit) $ throwT $ FederationError InvalidParams "Over limit"
+	when (amnt > fromIntegral limit) $
+		throwT $ FederationError InvalidParams "Over limit"
 
-	Vgg.UUID uuid <- fmap Vgg.uuid $ fmapLT apiErr $ EitherT $ liftIO $
-		VggC.createAccount vgg $
-			VggC.BankAccount (T.unpack account) t i a (read $ s"CAD")
+	dt <- noteT (FederationError InvalidParams "Invalid account") $ MaybeT $
+		fetchDT db vgg t i a (T.unpack account)
 
-	fdt <- query' "SELECT id FROM accounts WHERE vogogo_uuid = ? LIMIT 1" [uuid]
-	dt <- case fdt of
-		[[dt]] -> return dt
-		_ ->  do
-			rdt <- liftIO $ randomRIO (99999,199999999)
-			fst <$> insertSucc db (s"INSERT INTO accounts VALUES(?,?)")
-				(first succ) (rdt, uuid)
-
-	json ok200 [cors] (Quote rAddr (fromInteger dt)
-		(Ripple.Amount (amnt+fee) $ Ripple.Currency ('C','A','D') rAddr))
+	json ok200 [cors] (Quote rAddr dt
+		(Ripple.Amount (amnt + fromIntegral fee) $ Ripple.Currency ('C','A','D') rAddr))
 
 	where
 	query' sql = liftIO . query db (s sql)
 
-	apiErr Vgg.APIParamError = FederationError InvalidParams "Invalid account"
-	apiErr _ = FederationError Unavailable "Something went wrong"
-
 	fromQ k = noteT' (FederationError InvalidParams ("No "++k++" provided.")) $
 		queryLookup k (queryString req)
-
--- | Increments id until success
-insertSucc :: (MonadIO m,ToRow a) => Connection -> Query -> (a -> a) -> a -> m a
-insertSucc db q succ x = liftIO $ do
-	r <- try $ execute db q x
-	case r of
-		Left (SQLError ErrorConstraint _ _) ->
-			insertSucc db q succ (succ x)
-		Left e -> throwIO e
-		Right () -> return x

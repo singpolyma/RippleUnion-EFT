@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		{{#homeHeader}}
+			{{> meta.mustache}}
+		{{/homeHeader}}
+		<style type="text/css">
+			body > section {
+				max-width: 40em;
+				margin: auto;
+			}
+
+			body > section > img {
+				display: block;
+				margin: auto;
+				max-width: 100%;
+			}
+		</style>
+	</head>
+
+	<body>
+		{{#homeHeader}}
+			{{> header.mustache}}
+		{{/homeHeader}}
+
+		<section id="use">
+			<h1>How do I use the EFT direct-deposit bridge?</h1>
+
+			<p>Go to the "send" tab in your Ripple client and enter <strong>&lt;transit number&gt;-&lt;institution number&gt;-&lt;account number&gt;@eft.rippleunion.com</strong> as the recpient.</p>
+
+			<img src="/assets/bridgeSend.png" alt="" />
+		</section>
+
+		<section id="find-numbers">
+			<h1>How do I get my transit/institution/account numbers?</h1>
+
+			<p>You can get your account information from most online banking systems or a direct deposit form, but by far the easiest way is to just read the numbers on the bottom of your cheques:</p>
+			<img src="/assets/cheque.png" alt="12345 - 004 - 1234 1234567" />
+		</section>
+
+		<section id="security">
+			<h1>How secure is this?</h1>
+
+			<p>We take security very seriously.  The account numbers are always transmitted encrypted, and are never stored on our servers, only with our payment processor.</p>
+		</section>
+
+		<section id="limits">
+			<h1>What are the limits, and how do they work?</h1>
+
+			<p>Currently this bridge is limited to {{limit}} CAD per account per day.  We are working on a system to allow increased limits for heavy users.</p>
+
+			<p>If more payments are sent in one day than will fit within the limit, some payments will be delayed until the following day.</p>
+
+			<p>The bridge will refuse to quote for a transaction that is larger than the limit.  If you send such a payment anyway, additional delays and fees will apply.</p>
+		</section>
+
+		<section id="fees">
+			<h1>What are the fees, and how do they work?</h1>
+
+			<p>The fee is currently {{fee}} CAD per transaction.  We are working on ways to reduce this fee for heavy users.</p>
+
+			<p>The bridge will automatically include fees in quotes, so you can enter the amount you want to end up in the target account, and the amount you send will be correct including fees.</p>
+		</section>
+
+		<section id="status">
+			<h1>What are the different statuses an EFT transaction can be in?</h1>
+
+			<dl>
+				<dt>pending</dt>
+					<dd>Transaction will be processed with the next batch.</dd>
+
+				<dt>partial</dt>
+					<dd>Transaction has been partially sent with a previous batch.  It will be processed again with the next batch.</dd>
+
+				<dt>sent</dt>
+					<dd>Transaction has been fully sent to our payment processor.</dd>
+
+				<dt>failed</dt>
+					<dd>The transaction failed, likely due to invalid account information.  Please email us at <a href="mailto:eft@rippleunion.com">eft@rippleunion.com</a>.</dd>
+			</dl>
+		</section>
+
+		<section id="wait-time">
+			<h1>How long does it take?</h1>
+
+			<p>It can take up to five business days for a transaction to show up in the target bank account.</p>
+
+			<p>Transactions should show up on the summary page on this website within a couple hours, and will be batched together and posted to our payment processor once per day.</p>
+		</section>
+
+		<section id="dt">
+			<h1>Is the Destination Tag stable?</h1>
+
+			<p>Yes.  When a new bank account is seen for the first time, a destination tag is generated for it.  Any time a payment is sent to that destination tag (using the bridge or otherwise), that payment is queued for direct-deposit to the account.</p>
+		</section>
+
+		<section id="lookup">
+			<h1>Look up an account</h1>
+
+			<form method="get" autocomplete="off" action="{{lookupAction}}">
+				<input name="transit" type="number" required="required" placeholder="Transit Number" />
+				<input name="institution" type="number" required="required"  placeholder="Institution Number" />
+				<input name="account" type="number" required="required"  placeholder="Account Number" />
+				<button type="submit">Fetch Account Summary</button>
+			</form>
+		</section>
+	</body>
+</html>

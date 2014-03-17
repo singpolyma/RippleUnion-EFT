@@ -1,30 +1,22 @@
 {-# LANGUAGE CPP #-}
-module Application (federationEndpoint, quoteEndpoint, showAccount) where
+module Application (federationEndpoint, quoteEndpoint, showAccount, home, lookupAccount) where
 
 import Prelude ()
 import BasicPrelude
-import System.Random (randomRIO)
-import Control.Error (eitherT, EitherT(..), fmapLT, throwT, noteT, hoistMaybe)
-import Data.Base58Address (RippleAddress)
-import Database.SQLite3 (SQLError(..), Error(ErrorConstraint))
+import Control.Error (eitherT, MaybeT(..), noteT)
 import qualified Data.Text as T
 
-import Network.Wai (Application, Response, queryString)
-import Network.HTTP.Types (ok200, badRequest400, notFound404)
-import Network.Wai.Util (stringHeaders, textBuilder, queryLookup)
+import Network.Wai (Application, queryString)
+import Network.HTTP.Types (ok200, badRequest400, seeOther303)
+import Network.Wai.Util (stringHeaders, textBuilder, queryLookup, redirect', string)
 
-import qualified Vogogo as Vgg
-import qualified Vogogo.Customer as VggC
-
-import Network.URI (URI(..), URIAuth(..))
+import Network.URI (URI(..))
 import Network.URI.Partial (relativeTo)
 
-import Database.SQLite.Simple (query, execute, Connection, Query)
-import Database.SQLite.Simple.ToRow (ToRow)
-
-import qualified Ripple.Amount as Ripple
+import Database.SQLite.Simple (query, Connection)
 
 import Records
+import Account
 import Federation
 import MustacheTemplates
 #include "PathHelpers.hs"
@@ -40,6 +32,31 @@ htmlEscape = concatMap escChar
 
 Just [htmlCT] = stringHeaders [("Content-Type", "text/html; charset=utf-8")]
 
+getHeader :: (MonadIO m) => Connection -> m Header
+getHeader db = liftIO $
+	Header . fromInteger . head . head <$> query db (s $ concat[
+			"SELECT ledger_index FROM transactions ",
+			"ORDER BY ledger_index DESC LIMIT 1"
+		]) ([] :: [Int])
+
+home :: Action Application
+home root db _ _ _ = do
+	header <- getHeader db
+	textBuilder ok200 [htmlCT] $ viewHome htmlEscape $
+		Home [header] (lookupAccountPath `relativeTo` root)
+
+lookupAccount :: Action Application
+lookupAccount root db vgg _ req = eitherT (string badRequest400 []) return $ do
+	(t,i,a) <- (,,) <$> fromQ "transit" <*> fromQ "institution" <*> fromQ "account"
+
+	dt <- noteT "Could not look up that account." $ MaybeT $
+		fetchDT db vgg t i a (t++"-"++i++"-"++a)
+
+	redirect' seeOther303 [] (showAccountPath dt `relativeTo` root)
+	where
+	fromQ k = noteT' ("No "++k++" provided.") $ fmap T.unpack $
+		queryLookup k (queryString req)
+
 showAccount :: Action (Word32 -> Application)
 showAccount _ db _ _ account _ = do
 	txs <- query' [
@@ -52,12 +69,8 @@ showAccount _ db _ _ account _ = do
 			"ORDER BY ledger_index DESC"
 		] [toInteger account]
 
-	ledger <- fromInteger . head . head <$> query' [
-			"SELECT ledger_index FROM transactions ",
-			"ORDER BY ledger_index DESC LIMIT 1"
-		] ([] :: [Int])
-
+	header <- getHeader db
 	textBuilder ok200 [htmlCT] $ viewShowAccount htmlEscape
-		(ShowAccount [Header ledger] account txs)
+		(ShowAccount [header] account txs)
 	where
 	query' sql = liftIO . query db (s $ concat sql)
