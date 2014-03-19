@@ -1,4 +1,4 @@
-Main: Main.hs Application.hs Routes.hs PathHelpers.hs Records.hs Federation.hs MustacheTemplates.hs
+Main: Main.hs Application.hs Routes.hs PathHelpers.hs Records.hs Federation.hs MustacheTemplates.hs Webhook.hs
 	ghc -threaded -O2 -Wall -fno-warn-name-shadowing Main.hs
 
 Routes.hs: routes

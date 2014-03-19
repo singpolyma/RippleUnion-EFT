@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-module Application (federationEndpoint, quoteEndpoint, showAccount, home, lookupAccount) where
+module Application (federationEndpoint, quoteEndpoint, showAccount, home, lookupAccount, webhook) where
 
 import Prelude ()
 import BasicPrelude
@@ -18,6 +18,7 @@ import Database.SQLite.Simple (query, Connection)
 import Records
 import Account
 import Federation
+import Webhook
 import MustacheTemplates
 #include "PathHelpers.hs"
 

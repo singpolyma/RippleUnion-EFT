@@ -23,6 +23,7 @@ import Account
 #define NO_showAccount
 #define NO_home
 #define NO_lookupAccount
+#define NO_webhook
 #include "PathHelpers.hs"
 
 Just [cors] = stringHeaders [("Access-Control-Allow-Origin", "*")]

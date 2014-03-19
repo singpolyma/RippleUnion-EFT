@@ -4,3 +4,5 @@ GET /accounts/: => showAccount
 
 GET /federation => federationEndpoint
 GET /federation/quote => quoteEndpoint
+
+POST /vogogo/webhook => webhook
