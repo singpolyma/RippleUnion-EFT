@@ -3,6 +3,7 @@ module Federation (federationEndpoint, quoteEndpoint) where
 
 import Prelude ()
 import BasicPrelude
+import Data.Fixed (Centi)
 import Control.Error (eitherT, MaybeT(..), throwT, noteT)
 import qualified Data.Text as T
 
@@ -77,7 +78,7 @@ quoteEndpoint _ db vgg rAddr req = eitherT err return $ do
 	(samnt:currency:_) <- T.splitOn (s"/") <$> fromQ "amount"
 	when (currency /= s"CAD") $ throwT invalidCurrency
 	amnt <- noteT' (FederationError InvalidParams "Invalid amount")
-		(realToFrac <$> (readMay samnt :: Maybe Double))
+		(realToFrac <$> (readMay samnt :: Maybe Centi))
 
 	when (amnt > fromIntegral limit) $
 		throwT $ FederationError InvalidParams "Over limit"
