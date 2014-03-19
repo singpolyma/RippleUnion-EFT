@@ -5,6 +5,7 @@ import BasicPrelude hiding (getArgs, read)
 import Data.Fixed (Centi)
 import System.Environment (getArgs)
 import System.IO (hPutStrLn, stderr)
+import OpenSSL (withOpenSSL)
 import Database.SQLite.Simple (Connection, open, execute, execute_, query_)
 
 import qualified Vogogo as Vgg
@@ -26,7 +27,7 @@ s :: (IsString a) => String -> a
 s = fromString
 
 main :: IO ()
-main = do
+main = withOpenSSL $ do
 	[dbpth,vuser,vkey,vtoken] <- getArgs
 	db <- open dbpth
 
