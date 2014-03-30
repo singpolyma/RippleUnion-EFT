@@ -49,8 +49,8 @@ computeOnePayout limit fee =
 		else
 			let
 				-- Pay a fee if this is the first payout to include this transaction
-				-- or the transaction total is greater than the limit
-				pay = if paidOut == 0 || amount > limit then fee else 0
+				-- or the transaction total is greater than the (limit+fee)
+				pay = if paidOut == 0 || amount > (limit+fee) then fee else 0
 				-- Don't send already-paid-out or fee amounts
 				amountToSend = max ((amount - paidOut) - pay) 0
 				spaceLeft = limit - sum

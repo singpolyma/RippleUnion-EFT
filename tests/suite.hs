@@ -54,7 +54,7 @@ prop_computeOnePayout_correctFees (Positive limit) (Positive fee) ts =
 			Just (Transaction _ _ amnt pO)
 				-- Can't charge full fee on microtransaction
 				| pO == 0 -> realToFrac (if amnt <= fee then amnt else fee)
-				| amnt > limit -> realToFrac $
+				| amnt > (limit+fee) -> realToFrac $
 					if (amnt-pO) <= fee then
 						amnt - pO
 					else
