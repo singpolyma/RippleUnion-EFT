@@ -14,7 +14,7 @@ instance Arbitrary Transaction where
 	arbitrary = do
 		amount <- getPositive <$> arbitrary
 		paidOut <- realToFrac <$> choose (0::Double, realToFrac amount) `suchThat` (< realToFrac amount)
-		Transaction <$> vectorOf 64 arbitrary <*> arbitrary <*> pure amount <*> pure paidOut
+		Transaction <$> vectorOf 64 arbitrary <*> pure amount <*> pure paidOut <*> (Account <$> arbitrary <*> arbitrary)
 
 prop_mkAccountMap_byAccount :: [Transaction] -> Bool
 prop_mkAccountMap_byAccount ts =
@@ -51,7 +51,7 @@ prop_computeOnePayout_correctFees (Positive limit) (Positive fee) ts =
 	where
 	totalFees = sum $
 		map (\(tx,partial) -> case find ((==tx).txhash) ts of
-			Just (Transaction _ _ amnt pO)
+			Just (Transaction _ amnt pO _)
 				-- Can't charge full fee on microtransaction
 				| pO == 0 -> realToFrac (if amnt <= fee then amnt else fee)
 				| amnt > (limit+fee) -> realToFrac $
@@ -63,7 +63,7 @@ prop_computeOnePayout_correctFees (Positive limit) (Positive fee) ts =
 		) partials
 	totalNewRecorded = sum $
 		map (\(tx,partial) -> case find ((==tx).txhash) ts of
-			Just (Transaction _ _ _ pO) ->
+			Just (Transaction _ _ pO _) ->
 				(realToFrac partial - realToFrac pO) :: Rational
 			_ -> error "TEST WRITER ERROR: Transaction missing"
 		) partials

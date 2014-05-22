@@ -12,3 +12,11 @@ CREATE TABLE transactions (
 	invoiceid TEXT,
 	paid_out FLOAT NOT NULL DEFAULT 0
 );
+
+CREATE TABLE verifications (
+	item_id INTEGER NOT NULL,
+	item_table TEXT NOT NULL,
+	verification_type TEXT NOT NULL,
+	notes TEXT,
+	addr_token TEXT
+);

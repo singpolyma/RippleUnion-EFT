@@ -11,18 +11,18 @@ import Database.SQLite.Simple.Ok (Ok(..))
 import Database.SQLite.Simple.FromRow (FromRow(..), field, fieldWith)
 import Database.SQLite.Simple.FromField (fieldData)
 
-type Account = String
 type TxHash = String
+data Account = Account String Centi deriving (Show, Eq, Ord)
 
 data Transaction = Transaction {
 		txhash  :: TxHash,
-		account :: Account,
 		amount  :: Centi,
-		paidOut :: Centi
+		paidOut :: Centi,
+		account :: Account
 	} deriving (Show, Eq)
 
 instance FromRow Transaction where
-	fromRow = Transaction <$> field <*> field <*> fieldWith dbl <*> fieldWith dbl
+	fromRow = Transaction <$> field <*> fieldWith dbl <*> fieldWith dbl <*> (Account <$> field <*> fieldWith dbl)
 		where
 		dbl f = case fieldData f of
 			SQLInteger i -> Ok $ fromIntegral i
@@ -38,7 +38,7 @@ computeOnePayout :: Centi -> Centi -> [Transaction] -> (Centi, [(TxHash, Centi)]
 computeOnePayout limit fee =
 	assert (limit > 0) $
 	assert (fee >= 0) $
-	foldr (\(Transaction txhash _ amount paidOut) (sum,partials) ->
+	foldr (\(Transaction txhash amount paidOut _) (sum,partials) ->
 		assert (sum >= 0) $
 		assert (paidOut < amount) $
 		assert (limit >= sum) $
