@@ -27,7 +27,9 @@ fetchDT db vgg t i a account =
 				"WHEN " ++ type_concat ++ " LIKE '%,InPersonVerification,%' THEN 5000 ",
 				"ELSE " ++ textToString (show default_limit) ++ " ",
 				"END AS 'limit' ",
-				"FROM accounts WHERE vogogo_uuid = ? LIMIT 1"
+				"FROM accounts ",
+				"LEFT JOIN verifications ON verifications.item_table='accounts' AND verifications.item_id=accounts.id ",
+				"WHERE vogogo_uuid = ? GROUP BY id LIMIT 1"
 			]) [uuid]
 		case fdt of
 			[(dt,lim)] -> return $ (fromInteger dt, lim)
