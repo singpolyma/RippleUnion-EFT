@@ -80,11 +80,11 @@ quoteEndpoint _ db vgg rAddr req = eitherT err return $ do
 	amnt <- noteT' (FederationError InvalidParams "Invalid amount")
 		(realToFrac <$> (readMay samnt :: Maybe Centi))
 
-	when (amnt > fromIntegral limit) $
-		throwT $ FederationError InvalidParams "Over limit"
-
-	dt <- noteT (FederationError InvalidParams "Invalid account") $ MaybeT $
+	(dt,lim) <- noteT (FederationError InvalidParams "Invalid account") $ MaybeT$
 		fetchDT db vgg t i a (T.unpack account)
+
+	when (amnt > fromIntegral lim) $
+		throwT $ FederationError InvalidParams "Over limit"
 
 	json ok200 [cors] (Quote rAddr dt
 		(Ripple.Amount (amnt + fromIntegral fee) $ Ripple.Currency ('C','A','D') rAddr))

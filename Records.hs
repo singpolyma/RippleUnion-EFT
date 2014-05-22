@@ -24,8 +24,8 @@ import qualified Vogogo as Vgg
 fee :: Int
 fee = 5
 
-limit :: Int
-limit = 500
+default_limit :: Int
+default_limit = 500
 
 s :: (IsString s) => String -> s
 s = fromString

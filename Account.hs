@@ -14,20 +14,30 @@ import qualified Vogogo.Customer as VggC
 
 import Records
 
-fetchDT :: (MonadIO m) => Connection -> Vgg.Auth -> String -> String -> String -> String -> m (Maybe Word32)
+fetchDT :: (MonadIO m) => Connection -> Vgg.Auth -> String -> String -> String -> String -> m (Maybe (Word32, Int))
 fetchDT db vgg t i a account =
 	eitherT (const $ return Nothing) (return . Just) $ do
 		Vgg.UUID uuid <- fmap Vgg.uuid $ EitherT $ liftIO $
 			VggC.createAccount vgg $
 				VggC.BankAccount account t i a (read $ s"CAD")
 
-		fdt <- liftIO $ query db (s"SELECT id FROM accounts WHERE vogogo_uuid = ? LIMIT 1") [uuid]
+		fdt <- liftIO $ query db (s $ concat [
+				"SELECT id, ",
+				"CASE ",
+				"WHEN " ++ type_concat ++ " LIKE '%,InPersonVerification,%' THEN 5000 ",
+				"ELSE " ++ textToString (show default_limit) ++ " ",
+				"END AS 'limit' ",
+				"FROM accounts WHERE vogogo_uuid = ? LIMIT 1"
+			]) [uuid]
 		case fdt of
-			[[dt]] -> return $ fromInteger dt
+			[(dt,lim)] -> return $ (fromInteger dt, lim)
 			_ ->  do
 				rdt <- liftIO $ randomRIO (99999,199999999)
-				fst <$> insertSucc db (s"INSERT INTO accounts VALUES(?,?)")
+				finDT <- fst <$> insertSucc db (s"INSERT INTO accounts VALUES(?,?)")
 					(first succ) (rdt, uuid)
+				return $ (finDT, default_limit)
+	where
+	type_concat = "((',' || GROUP_CONCAT(verification_type) || ','))"
 
 -- | Increments id until success
 insertSucc :: (MonadIO m,ToRow a) => Connection -> Query -> (a -> a) -> a -> m a

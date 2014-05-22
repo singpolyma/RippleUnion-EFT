@@ -50,7 +50,7 @@ lookupAccount :: Action Application
 lookupAccount root db vgg _ req = eitherT (string badRequest400 []) return $ do
 	(t,i,a) <- (,,) <$> fromQ "transit" <*> fromQ "institution" <*> fromQ "account"
 
-	dt <- noteT "Could not look up that account." $ MaybeT $
+	(dt, _) <- noteT "Could not look up that account." $ MaybeT $
 		fetchDT db vgg t i a (t++"-"++i++"-"++a)
 
 	redirect' seeOther303 [] (showAccountPath dt `relativeTo` root)
