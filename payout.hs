@@ -54,14 +54,14 @@ main = withOpenSSL $ do
 		Map.mapWithKey (\(Account _ limit) -> computeOnePayout limit fee) $
 		mkAccountMap transactions
 
-	forM_ payouts $ \(account, (payout, partials)) -> do
+	forM_ payouts $ \((Account vggHash _), (payout, partials)) -> do
 		execute_ db (s"BEGIN TRANSACTION")
 
 		forM_ partials $ \(txhash, amount) -> do
 			execute db (s"UPDATE transactions SET paid_out = ? WHERE txhash = ?")
 				(realToFrac amount :: Double, txhash)
 
-		hPutStrLn stderr $ "SENDING PAYOUT OF " ++ textToString (show payout) ++ " TO " ++ textToString (show account)
-		print =<< Vgg.sendEFT vogogo wallet (Vgg.UUID account) payout (read "CAD")
+		hPutStrLn stderr $ "SENDING PAYOUT OF " ++ textToString (show payout) ++ " TO " ++ vggHash
+		print =<< Vgg.sendEFT vogogo wallet (Vgg.UUID vggHash) payout (read "CAD")
 
 		execute_ db (s"END TRANSACTION")
