@@ -119,21 +119,21 @@ instance ToJSON ShouldQuote where
 						s"label"    .= "Transit Number",
 						s"name"     .= "transit",
 						s"required" .= True,
-						s"type"     .= "number",
+						s"type"     .= "text",
 						s"value"    .= fromMaybe mempty transit
 					],
 					object [
 						s"label"    .= "Institution Number",
 						s"name"     .= "institution",
 						s"required" .= True,
-						s"type"     .= "number",
+						s"type"     .= "text",
 						s"value"    .= fromMaybe mempty inst
 					],
 					object [
 						s"label"    .= "Account Number",
 						s"name"     .= "account",
 						s"required" .= True,
-						s"type"     .= "number",
+						s"type"     .= "text",
 						s"value"    .= fromMaybe mempty acct
 					]
 				]
