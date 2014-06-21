@@ -17,6 +17,7 @@ import Database.SQLite.Simple.Ok (Ok(..))
 import Database.SQLite.Simple.FromRow (FromRow(..), field, fieldWith)
 import Database.SQLite.Simple.FromField (fieldData)
 import Text.Blaze.Html.Renderer.Text (renderHtmlBuilder)
+import Web.PathPieces (PathPiece(..))
 
 import qualified Ripple.Amount as Ripple
 import qualified Vogogo as Vgg
@@ -40,6 +41,10 @@ instance Buildable (MarkupM a) where
 
 instance Buildable URI where
 	build = build . show
+
+instance PathPiece Word32 where
+	fromPathPiece = readMay
+	toPathPiece = show
 
 data Home = Home {
 		homeHeader :: [Header],
