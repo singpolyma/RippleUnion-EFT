@@ -99,16 +99,39 @@ instance ToJSON Alias where
 			] ++ maybe [] (\x -> [s"dt" .= x]) dt)
 		]
 
-data ShouldQuote = ShouldQuote Text Text URI
+data ShouldQuote = ShouldQuote Text Text URI (Maybe Text, Maybe Text, Maybe Text)
 
 instance ToJSON ShouldQuote where
-	toJSON (ShouldQuote alias domain quoteURI) = object [
+	toJSON (ShouldQuote alias domain quoteURI (transit,inst,acct)) = object [
 		s"federation_json" .= object [
 				s"type" .= "federation_record",
 				s"destination" .= alias,
 				s"domain" .= domain,
 				s"quote_url" .= show quoteURI,
-				s"currencies" .= [object [s"currency" .= "CAD"]]
+				s"currencies" .= [object [s"currency" .= "CAD"]],
+				s"extra_fields" .= [
+					object [
+						s"label"    .= "Transit Number",
+						s"name"     .= "transit",
+						s"required" .= True,
+						s"type"     .= "number",
+						s"value"    .= fromMaybe mempty transit
+					],
+					object [
+						s"label"    .= "Institution Number",
+						s"name"     .= "institution",
+						s"required" .= True,
+						s"type"     .= "number",
+						s"value"    .= fromMaybe mempty inst
+					],
+					object [
+						s"label"    .= "Account Number",
+						s"name"     .= "account",
+						s"required" .= True,
+						s"type"     .= "number",
+						s"value"    .= fromMaybe mempty acct
+					]
+				]
 			]
 		]
 
