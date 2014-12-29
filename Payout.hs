@@ -26,7 +26,7 @@ instance FromRow Transaction where
 		where
 		dbl f = case fieldData f of
 			SQLInteger i -> Ok $ fromIntegral i
-			SQLFloat d -> Ok $ realToFrac d
+			SQLFloat d -> Ok ((realToFrac (round (d*100)) :: Centi) / 100)
 			_ -> Errors []
 
 mkAccountMap :: [Transaction] -> Map Account [Transaction]
